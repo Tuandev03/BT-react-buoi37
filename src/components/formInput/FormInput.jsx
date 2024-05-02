@@ -1,18 +1,31 @@
+// FormInput.jsx
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import InputCustom from "../inputCustom/inputCustom";
 
-const FormInput = ({ addData }) => {
+const FormInput = ({ addData, selectedItem, updateData, data }) => {
+  const [readOnlyMode, setReadOnlyMode] = useState(false);
+
   const { handleChange, handleBlur, errors, values, handleSubmit, touched } =
     useFormik({
       initialValues: {
-        maSinhVien: "",
-        tenSinhVien: "",
-        email: "",
-        soDt: "",
+        maSinhVien: selectedItem ? selectedItem.maSinhVien : "",
+        tenSinhVien: selectedItem ? selectedItem.tenSinhVien : "",
+        email: selectedItem ? selectedItem.email : "",
+        soDt: selectedItem ? selectedItem.soDt : "",
       },
       onSubmit: (values, { resetForm }) => {
-        addData(values);
+        if (selectedItem) {
+          updateData(
+            values,
+            data.findIndex(
+              (item) => item.maSinhVien === selectedItem.maSinhVien
+            )
+          );
+        } else {
+          addData(values);
+        }
         resetForm();
       },
       validationSchema: Yup.object({
@@ -37,6 +50,61 @@ const FormInput = ({ addData }) => {
       }),
     });
 
+  useEffect(() => {
+    if (selectedItem) {
+      handleChange({
+        target: {
+          name: "tenSinhVien",
+          value: selectedItem.tenSinhVien,
+        },
+      });
+      handleChange({
+        target: {
+          name: "email",
+          value: selectedItem.email,
+        },
+      });
+      handleChange({
+        target: {
+          name: "soDt",
+          value: selectedItem.soDt,
+        },
+      });
+    } else {
+      setReadOnlyMode(false);
+    }
+  }, [selectedItem]);
+
+  const handleEditClick = (item) => {
+    handleChange({
+      target: {
+        name: "tenSinhVien",
+        value: item.tenSinhVien,
+      },
+    });
+    handleChange({
+      target: {
+        name: "email",
+        value: item.email,
+      },
+    });
+    handleChange({
+      target: {
+        name: "soDt",
+        value: item.soDt,
+      },
+    });
+    setReadOnlyMode(true);
+  };
+
+  const handleInputChange = (e) => {
+    if (readOnlyMode && e.target.name === "maSinhVien") {
+      return; // Không làm gì nếu đang ở chế độ chỉ đọc
+    } else {
+      handleChange(e);
+    }
+  };
+
   return (
     <div className="container space-y-2">
       <h1 className="bg-black p-4 text-white text-center font-semibold text-2xl">
@@ -48,57 +116,63 @@ const FormInput = ({ addData }) => {
             <InputCustom
               label="Mã sinh viên"
               name="maSinhVien"
-              handleChange={handleChange}
+              handleChange={handleInputChange}
               handleBlur={handleBlur}
               type="text"
               placeholder="Vui lòng nhập mã sinh viên"
               error={errors.maSinhVien}
               touched={touched.maSinhVien}
               value={values.maSinhVien}
+              readOnly={readOnlyMode}
             />
             <InputCustom
               label="Số điện thoại"
               name="soDt"
-              handleChange={handleChange}
+              handleChange={handleInputChange}
               handleBlur={handleBlur}
               type="text"
               placeholder="Vui lòng nhập số điện thoại"
               error={errors.soDt}
               touched={touched.soDt}
               value={values.soDt}
+              readOnly={readOnlyMode}
             />
           </div>
           <div className="flex flex-col w-full space-y-3">
             <InputCustom
               label="Tên sinh viên"
               name="tenSinhVien"
-              handleChange={handleChange}
+              handleChange={handleInputChange}
               handleBlur={handleBlur}
               type="text"
               placeholder="Vui lòng nhập tên sinh viên"
               error={errors.tenSinhVien}
               touched={touched.tenSinhVien}
               value={values.tenSinhVien}
+              readOnly={readOnlyMode}
             />
             <InputCustom
               label="Email"
               name="email"
-              handleChange={handleChange}
+              handleChange={handleInputChange}
               handleBlur={handleBlur}
               type="text"
               placeholder="Vui lòng nhập email"
               error={errors.email}
               touched={touched.email}
               value={values.email}
+              readOnly={readOnlyMode}
             />
           </div>
         </div>
-        <button
-          type="submit"
-          className="py-2 px-8 bg-blue-500 rounded text-white font-semibold"
-        >
-          Thêm
-        </button>
+        <div className=" space-x-3">
+          <button
+            type="submit"
+            className="py-2 px-8 bg-blue-500 rounded text-white font-semibold"
+          >
+            {selectedItem ? "Cập nhật" : "Thêm"}
+          </button>
+        </div>
       </form>
     </div>
   );
